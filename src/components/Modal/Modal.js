@@ -1,43 +1,35 @@
 import * as SC from './Modal.styled'
 import { createPortal } from 'react-dom'
-import { Component } from 'react'
+import { useEffect } from 'react'
 import PropTypes from 'prop-types'
 
 const modalRoot = document.querySelector('#modal-root')
-console.log(modalRoot)
 
-export class Modal extends Component {
+export const Modal = ({ src, alt, modalChanger }) => {
 
-    componentDidMount() {
-        window.addEventListener("keydown", this.handleKeyDown)
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener("keydown", this.handleKeyDown)
-    }
-
+    useEffect(() => {
+        const handleKeyDown = e => {
+            if (e.code === "Escape") modalChanger()
+        }
+        window.addEventListener("keydown", handleKeyDown)
     
-    render() {
-        const { src, alt } = this.props
-        return createPortal(
-            <SC.Overlay onClick={(e) => this.closeModal(e)}>
-                <SC.Modal className="modal">
-                    <img src={src} alt={alt} />
-                </SC.Modal>
-            </SC.Overlay>,
-            modalRoot
-        )
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown)
+        }
+    }, [modalChanger])
+
+    const closeModal = (e) => {
+        if (e.target === e.currentTarget) modalChanger()
     }
 
-
-    handleKeyDown = e => {
-        if (e.code === "Escape") return this.props.modalChanger()
-    }
-
-    closeModal = (e) => {
-        if (e.target === e.currentTarget) this.props.modalChanger()
-    }
-
+    return createPortal(
+        <SC.Overlay onClick={(e) => closeModal(e)}>
+            <SC.Modal className="modal">
+                <img src={src} alt={alt} />
+            </SC.Modal>
+        </SC.Overlay>,
+        modalRoot
+    )
 }
 
 Modal.propTypes = {
