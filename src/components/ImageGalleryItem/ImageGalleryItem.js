@@ -1,32 +1,28 @@
 import * as SC from "./ImageGalleryItem.styled";
-import { Component } from 'react';
+import { useState } from 'react';
 import { Modal } from "components/Modal/Modal";
 import PropTypes from 'prop-types'
 
-export class ImageGalleryItem extends Component {
-    state = {
-        showModal: false
-    }
+export const ImageGalleryItem = ({img:{webformatURL, largeImageURL, tags}}) => {
+    const [showModal, setShowModal] = useState(false)
 
-    modalChanger = () => this.setState(({ showModal }) => ({ showModal: !showModal }))
+    const modalChanger = () => setShowModal( showModal => !showModal )
         
-    render() {
-        const { webformatURL, largeImageURL, tags } = this.props.img
-        const {showModal} = this.state
+
 
         return (
             <SC.ImageGalleryItem >
                 <img src={webformatURL} alt={tags}
-                    onClick={this.modalChanger}
+                    onClick={modalChanger}
                 />
                 {showModal &&
                     <Modal src={largeImageURL}
                         alt={tags}
-                        modalChanger={this.modalChanger}/>
+                        modalChanger={modalChanger}/>
                 }
             </SC.ImageGalleryItem>
         )
-    }
+    
 }
 
 ImageGalleryItem.propTypes = {
