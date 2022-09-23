@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import {  useEffect, useState } from 'react';
 import { GlobalStyle } from './GlobalStyle';
 import { Searchbar } from './Searchbar/Searchbar';
 import { AppStyled } from "./App.styled"
@@ -7,70 +7,53 @@ import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import { ApiRequest } from 'API/API';
 
-const InitsialState = {
-  query: "",
-  page: 1,
-  totalHits: 0,
-  hits: [],
-  loading: false
-}
-
-export class App extends Component {
-  state = { ...InitsialState}
+export const App = () => {
+  const [query, setQuery] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalHitsImg, setTotalHitsImg] = useState(0)
+  const [images, setImages] = useState([])
+  const [loading, setLoading] = useState(false)
 
 
-   componentDidUpdate(_, prevState) {
-    const { query, page } = this.state
-    if (prevState.query !== query) {
-      this.formFetch(query)
-    }
-     
-     if (prevState.page !== page && page !== 1) {
-       this.loadMore(prevState ,page)
-    }
+  const INITIAL_STATE = () => {
+    setQuery("")
+    setPage(1)
+    setTotalHitsImg(0)
+    setImages([])
+    setLoading(false)
   }
 
-
-  render() {
-    const { hits, page, totalHits, loading} = this.state
-    const maxPage = Math.ceil( +totalHits / 12 )
-    return (
-      <AppStyled>
-        <Searchbar updateQuery={this.updateQuery} />
-        <ImageGallery imgs={hits} imageClick={this.showBigImage} />
-        {page < maxPage && <Button title="Load more" onClick={this.updatePage} />}
-        {loading && <Loader />}
-      
-        <GlobalStyle />
-      </AppStyled>
-    );
-  };
-
-
-  updateQuery = (query) => {
-    this.setState({query})
-  }
-
-  updatePage = () => {
-    this.setState(({page}) => ({page: page + 1}))
-  }
-
-  formFetch = async (query) => {
-    if (query === "") {
-        this.setState({...InitsialState})
+  useEffect(() => {
+    const fetchData = async () => {
+      if (query === "") {
+        INITIAL_STATE()
+      } else if (page !== 1 && query !== "") {
+        setLoading(true)
+        const { hits } = await ApiRequest(query, page)
+        setImages(images => [...images, ...hits])
+        setLoading(false)
       } else {
-        this.setState({loading: true})
+        setLoading(true)
         const { totalHits, hits } = await ApiRequest(query, 1)
-        this.setState({ totalHits, hits, page: 1 })
-        this.setState({loading: false})
+        setTotalHitsImg(totalHits)
+        setImages(hits)
+        setPage(1)
+        setLoading(false)
       }
-  }
+    }
+    fetchData()
+  }, [page, query])
 
-  loadMore = async (prevState ,page) => {
-    this.setState({ loading: true })
-    const query = this.state.query
-    const { hits } = await ApiRequest(query, page)
-    this.setState({ hits:[ ...prevState.hits, ...hits], page})
-    this.setState({ loading: false })
-  }
+
+  const maxPage = Math.ceil(+totalHitsImg / 12)
+  return (
+    <AppStyled>
+      <Searchbar updateQuery={setQuery} />
+      <ImageGallery imgs={images}/>
+      {page < maxPage && <Button title="Load more" onClick={() => setPage(page => page + 1)} />}
+      {loading && <Loader />}
+      
+      <GlobalStyle />
+    </AppStyled>
+  );
 }
